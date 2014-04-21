@@ -1,0 +1,217 @@
+* 基本
+** 运行   
+   lua luafile.lua #执行lua脚本
+   lua -i luafile.lua #执行lua脚本，并进入交互模式，在调试的时候可以使用该方法
+   使用dotfile方法也可以使用执行脚本
+   在命令行执行lua -e "print('hello')"，lua会将""中的内容作为命令来执行
+   lua -l a "x = 10"，-l表示加载库文件a，如果库文件不存在lua会输出错误，
+   从错误中就可以获取到lua如何处理库文件的
+   _PROMPT变量用作交互界面的提示符号, lua -i -e "_PROMPT='lua >'"
+   在交互界面中可以使用 = 变量名 打印变量的值
+   Before running its arguments, lua looks for an environment variable named LUA_INIT.
+   If there is such a variable and its content is @filename, then lua runs the given file.
+   If LUA_INIT is defined but does not start with ‘@’, then lua assumes that it contains Lua code and runs it
+
+** 注释
+   --： 单行注释
+
+   --[[
+   --]]：多行注释
+   
+   ---[[
+   --]]： 会忽略注释中的内容
+
+** 变量命名
+   变量命名只要不以数字开头，并且以下划线开头，后接大写字母的是Lua的保留字, 例如：_VERSION
+   Lua中的变量默认为全局变量
+   生命局部变量使用local
+   如果想删除某个全局变量， 只须将该变量设置为nil就可以了
+   
+** 命令行交互
+   lua会将变量列表的值存入arg变量中，例如如下两例中的arg变量的值是
+   lua scriptname a b：arg[0]=scriptname, arg[1]=a, arg[2]=b
+   lua -e "sin=math.sin" scriptname a b： arg[0]=scriptname, arg[1]=a, arg[2]=b, arg[-1]="sin=math.sin"
+   以此类推
+** 类型
+   八种基本的类型：nil, boolean, number, string, userdata, function, thread, table
+   print(type(type(X))) --> string
+
+   在条件判断中只有nil和false会被认为是false，其他的值一律认为是true，包括0空字符串等都是true
+   number类型是双精度的浮点数表示的
+
+   字符串：可以包含'\0'， 可以用string存放任何的数据，lua自己会管理string的内存，不用程序员操心内存的
+   分配与释放
+   We can specify a character in a string also by its numeric value through
+   the escape sequence \ddd, where ddd is a sequence of up to three decimal
+   digits. As a somewhat complex example, the two literals "alo\n123\"" and
+   ’\97lo\10\04923"’ have the same value, in a system using ASCII: 97 is the
+   ASCII code for ‘a’, 10 is the code for newline, and 49 is the code for the digit
+   ‘1’. (In this example we must write 49 with three digits, as \049, because it is
+   followed by another digit; otherwise Lua would read the number as 492.)
+
+   a = [[
+   xxxx
+   ]\] xxx表示其他的任何字符如果需要[[ ]\]则使用转义符号即可，\符号是多余的，在此是为了取消emacs对其做的处理
+   Sometimes, you may want to enclose a piece of code containing something
+   like a = b[c[i]] (notice the ]] in this code). Or you may need to enclose some
+   code that already has some code commented out. To handle such cases, you can
+   add any number of equal signs between the two open brackets, as in [===[. 2
+   After this change, the literal string ends only at the next closing brackets with
+   the same number of equal signs in between (]===], in our example).
+   Pairs of brackets with a different number of equal signs are simply ignored. By
+   choosing an appropriate number of signs, you can enclose any literal string
+   without having to add escapes into it.
+
+   This same facility is valid for comments, too. For instance, if you start a long
+   comment with --[=[, it extends until the next ]=]. This facility allows you easily
+   to comment out a piece of code that contains parts already commented out.
+** 类型转换
+   Lua applies such coercions not only in arithmetic operators, but also in other
+   places that expect a number.
+   print("10" + 1) --> 11
+   print("hello" + 1) --> ERROR (cannot convert "hello")
+   print("-5.3e-10"*"2") --> -1.06e-09
+   如果想做字符串连接，需要使用..， ..在数字的右边时， 前面需要有额外的空格，否则会将..认为是浮点数的
+   小数点从而出现错误
+   print(10 .. 20) --> 1020 
+   print(10 == "10") --> false
+   print(10 == tonumber("10")) -->true
+   print(10 == tonumber("a")) -->false，tonumber在无法转换的情况下会返回nil
+   将number类型转换为string类型， tostring函数或则print(10 .."") -->"10"
+   函数# 会返回字符串的长度， a = "hello\0" print(#a) -->6
+** tables
+   The table type implements associative arrays.
+   tables的键可以是字符串也可以是数字
+   Also like global variables, you can assign nil to a table field to delete it.
+   Lua supports this representation by providing a.name as syntactic sugar for a["name"].
+
+   t = {10, [100] = 40, a={age=27, gender=male}, 20} #其中a不能用"a"替换，可以用["a"]替换
+   print(t[1], t[2], t[3], t.a.age) --> 10, 20, nil, 27， 索引从1开始，不是从0开始
+
+   In Lua 5.1, the length operator ‘#’ returns the last index (or the size) of an array or list
+   例如：
+   a = {}
+   for i=1,10 do
+       a[#a+1] = io.read()
+   end
+
+   Remember that any non-initialized index results in nil; Lua uses this value as a
+   sentinel to find the end of the array. When the array has holes — nil elements
+   inside it — the length operator may assume any of these nil elements as the end marker
+   例如：
+   a = {}
+   a[100] = 1
+   print(#a) -->0
+   you should avoid using the length operator on arrays that may contain holes.
+   If you really need to handle arrays with holes up to their last index, you can use
+   the function table.maxn
+   print(table.maxn(a))
+* 表达式
+  For instance, x%1 is the fractional part of x, and so x - x%1 is its integer
+  part. Similarly, x - x%0.01 is x with exactly two decimal digits
+  例如：
+  x = math.pi
+  print(x - x%0.01) --> 3.14
+
+  ==：判断是否相等
+  ~=：判断是否不相等
+  Lua raises an error
+  when you mix strings and numbers in an order comparison, such as 2 < "15"
+** 逻辑操作符
+   The operator and returns its first argument if it is false; otherwise,
+   it returns its second argument.
+
+   The operator or returns its first argument if it is not false;
+   otherwise, it returns its second argument
+
+   Both and and or use short-cut evaluation
+
+   A useful Lua idiom is x = x or v, which is equivalent to
+   if not x then x = v end
+
+   Another useful idiom is (a and b) or c (or simply a and b or c, because and
+   has a higher precedence than or), which is equivalent to the C expression a?b:c
+
+   Operator precedence in Lua follows the table below, from the higher to the lower priority
+   ^
+   not # -(unary，一元)
+   * / %
+   + -
+   .. 
+   < > <= >= 
+   and
+   or
+   All binary operators are left associative, except for ‘^’ (exponentiation) and ‘..’
+   (concatenation), which are right associative.
+   例如： x^y^z <-->x^(y^z)
+** table 构造函数
+   Every time Lua evaluates a constructor, it creates and initializes a new table.
+   So, we can use tables to implement linked lists:
+   list = nil
+   for line in io.lines() do
+       list = {next=list, value=line}
+   end
+
+   The following code traverses the list and prints its contents:
+   local l = list
+   while l do
+       print(l.value)
+       l = l.next
+   end
+
+   polyline = {color="blue", thickness=2, npoints=4,
+       {x=0, y=0}, --index 1
+       {x=-10, y=0}, --index 2
+       {x=-10, y=1},
+       {x=0, y=1}
+   }
+   print(polyline[2].x) --> -10
+   print(polyline[4].y) --> 1
+
+   if you really want their arrays starting at 0, it is not too difficult to write the following:
+   days = {[0]="Sunday", "Monday", "Tuesday", "Wednesday",
+       "Thursday", "Friday", "Saturday"}
+   You can always put a comma after the last entry. These trailing commas are
+   optional, but are always valid:
+   a = {[1]="red", [2]="green", [3]="blue",}
+
+   Finally, you can always use a semicolon instead of a comma in a constructor.
+   I usually reserve semicolons to delimit different sections in a constructor, for
+   instance to separate its list part from its record part:
+   {x=10, y=45; "one", "two", "three"}
+* Statements
+  a, b = 10, 20 --> a = 10, b = 20
+  a, b = b, a --> swap a and b
+  Lua always adjusts the number of values to the number of variables: when
+  the list of values is shorter than the list of variables, the extra variables receive
+  nil as their values; when the list of values is longer, the extra values are silently discarded
+  A multiple assignment is not faster than its equivalent single assignments
+
+  local variables have their scope limited to the block where they are declared.
+  A block is the body of a control structure, the body of a function,
+  or a chunk (the file or string where the variable is declared):
+
+  如果在交互界面中， local i = 1 ; print(i) --> i = 1，但是如果换行的话，print(i) 为nil
+  In interactive mode, each line is a chunk by itself (unless it is not a complete command).
+  As soon as you enter the second line of the example
+  (local i = 1), Lua runs it and starts a new chunk in the next line. By then, the
+  local declaration is already out of scope.
+  To solve this problem, we can delimit the whole block explicitly,
+  bracketing it with the keywords do–end.
+
+  These do blocks are useful also when you need finer control over the scope of
+  some local variables:
+  do
+      local a2 = 2*a
+      local d = (b^2 - 4*a*c)^(1/2)
+      x1 = (-b + d)/a2
+      x2 = (-b - d)/a2
+  end
+  -- scope of ’a2’ and ’d’ ends here
+  print(x1, x2)
+  Moreover, the access to local variables is faster than to global ones.
+
+
+
+
+

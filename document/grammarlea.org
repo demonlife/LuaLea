@@ -11,22 +11,17 @@
    Before running its arguments, lua looks for an environment variable named LUA_INIT.
    If there is such a variable and its content is @filename, then lua runs the given file.
    If LUA_INIT is defined but does not start with ‘@’, then lua assumes that it contains Lua code and runs it
-
 ** 注释
    --： 单行注释
 
-   --[[
-   --]]：多行注释
+   --[[ --]\]：多行注释
    
-   ---[[
-   --]]： 会忽略注释中的内容
-
+   ---[[ --]\]： 会执行注释中的内容
 ** 变量命名
    变量命名只要不以数字开头，并且以下划线开头，后接大写字母的是Lua的保留字, 例如：_VERSION
    Lua中的变量默认为全局变量
    生命局部变量使用local
    如果想删除某个全局变量， 只须将该变量设置为nil就可以了
-   
 ** 命令行交互
    lua会将变量列表的值存入arg变量中，例如如下两例中的arg变量的值是
    lua scriptname a b：arg[0]=scriptname, arg[1]=a, arg[2]=b
@@ -210,8 +205,89 @@
   -- scope of ’a2’ and ’d’ ends here
   print(x1, x2)
   Moreover, the access to local variables is faster than to global ones.
+** for
+   First, all three expressions are evaluated once, before the loop starts.
+   For instance, in our previous example, f(x) is called only once. Second, the
+   control variable is a local variable automatically declared by the for statement
+   and is visible only inside the loop.
 
+   you should never change the value of the control variable: the effect of
+   such changes is unpredictable.
+** generic for
+   The generic for loop traverses all values returned by an iterator function:
+   -- print all values of array 'a'
+   for i,v in ipairs(a) do print(v) end
+   The basic Lua library provides ipairs, a handy iterator function to traverse an array.
 
+   a = {'a', 'b', 'c', 'd'}
+   for i,v in ipairs(a) do print(v) end
 
+   -- print all keys of table 't'
+   for k in pairs(a) do print(k) end
+* Fuction
+  if the function has one single argument and that argument is either a literal string or
+  a table constructor, then the parentheses are optional, 例如：
+  print "Hello World" <--> print("Hello World")
+  dofile 'a.lua' <--> dofile ('a.lua')
+  f{x=10, y=20} <--> f({x=10, y=20})
+  type{} <--> type({})
 
+  Lua also offers a special syntax for object-oriented calls, the colon operator.
+  An expression like o:foo(x) is just another way to write o.foo(o,x), that is, to
+  call o.foo adding o as a first extra argument.
 
+  function f(a, b) return a or b end
+  调用方法是f(3) --> a = 3, b = nil
+  f(3, 4) --> a = 3, b = 4
+  f(3, 4, 5) --> a= 3, b = 4, 5 丢弃
+  
+  You can force a call to return exactly one result by
+  enclosing it in an extra pair of parentheses:
+  print((foo0())) --> nil
+  print((foo1())) --> a
+** variable number of arguments
+   function add(...)
+   local s = 0
+   for i, v in ipairs{...} do
+       s = s + v
+   end
+   return s
+   end
+   print(add(3, 4, 10, 25, 12))
+** select
+   In the rare occasions when the vararg list may contain valid nils, we can use the select
+   function. A call to select has always one xed argument, the selector, plus
+   a variable number of extra arguments. If the selector is a number n, select
+   returns its n-th extra argument; otherwise, the selector should be the string "#",
+   so that select returns the total number of extra arguments
+
+   for i=1, select('#', ...) do
+       local arg = select(i, ...) -- get i-th parameter
+   end
+  
+   Specifically, the call select("#",...) returns the exact number of extra parameters,
+   including nils.
+
+   Lua 5.0 did not have the ... expression. Instead, a vararg function had a hidden local variable,
+   called arg, that received a table with the varargs.
+   This table also got an n field with the total number of extra arguments.
+   We can simulate this old behavior as follows:
+   function foo (a, b, ...)
+       local arg = {...}; arg.n = select("#", ...)
+       <function body>
+   end
+*** 闭包
+    使用lua的闭包功能，可以实现一个简单的沙箱，例如：
+    do
+        local oldOpen = io.open
+        local access_OK = function (filename, mode)
+            <check access>
+        end
+        io.open = function (filename, mode)
+        if access_OK(filename, mode) then
+            return oldOpen(filename, mode)
+        else
+            return nil, "access denied"
+        end
+    end
+    end

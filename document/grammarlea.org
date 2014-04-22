@@ -291,3 +291,122 @@
         end
     end
     end
+
+    Lua handles each chunk as a function, a chunk may
+    declare local functions, which are visible only inside the chunk.
+*** Non-Global Functions
+    -- local fact -- 如果不提前申明，则else中的fact会调用全局的fact函数，因此会有bug存在
+    local fact = function (n)
+        if n == 0 then return 1
+        else return n*fact(n-1) -- buggy
+        end
+    end
+    
+    local function foo(<params>) <body> end
+    expands to
+    local foo
+    foo = function(<params>) <body> end
+    Of course, this trick does not work if you have indirect recursive functions.
+    In such cases, you must use the equivalent of an explicit forward declaration， 例如：
+
+    local f, g -- 'forward' declarations
+    function g ()
+    <some code> f() <some code>
+    end
+
+    function f ()
+    <some code> g() <some code>
+    end
+    Beware not to write local function f in the last denition. Otherwise, Lua
+    would create a fresh local variable f, leaving the original f (the one that g is
+    bound to) undened.
+    
+    利用尾递归调用实现的一个简单的走步程序
+    function room1()
+       local move = io.read()
+       if move == "south" then return room3()
+       elseif move == "east" then return room2()
+       else
+          print("invalid move")
+          return room1()
+       end
+    end
+     
+    function room2()
+       local move = io.read()
+       if move == "south" then return room4()
+       elseif move == "west" then return room1()
+       else
+          print("invalid move")
+          return room2()
+       end
+    end
+     
+    function room3()
+       local move = io.read()
+       if move == "north" then return room1()
+       elseif move == "east" then return room4()
+       else
+          print("invalid move")
+          return room3()
+       end
+    end
+     
+    function room4()
+       print("congratulations")
+    end
+     
+    room1()
+* Iterators and Generic for
+** iterators and closures  
+   迭代器例子：
+   function values(t)
+       local i = 0
+       return function() i = i + 1; return t[i] end
+   end
+   调用：
+   t = {10, 2, 30}
+   iter = values(t)
+   while true do
+       local element = iter()
+       if element == nil then break end
+       print(element)
+   end
+   另一种使用方法
+   for element in values(t) do
+       print(element)
+   end
+
+   一个可以读取文件的迭代器：
+   function allwords()
+      local line = io.read()
+      local pos = 1
+      return function()
+         while line do
+            local s, e = string.find(line, "%w+", pos)
+            if s then
+               pos = e + 1
+               return string.sub(line, s, e)
+            else
+               line = io.read()
+               pos = 1
+            end
+         end
+         return nil
+      end
+   end
+
+   调用：
+   for word in allwords() do
+       print(word)
+   end
+*** The Semantics of the Generic for
+    We saw that the generic for keeps the iterator function internally, during the
+    loop. Actually, it keeps three values: the iterator function, an invariant state,
+    and a control variable. Let us see the details now.
+    The syntax for the generic for is as follows:
+
+    for <var-list> in <exp-list> do
+        <body>
+    end
+*** Stateless Iterators(P78) 

@@ -1,5 +1,5 @@
 * 基本
-** 运行   
+** 运行
    lua luafile.lua #执行lua脚本
    lua -i luafile.lua #执行lua脚本，并进入交互模式，在调试的时候可以使用该方法
    使用dotfile方法也可以使用执行脚本
@@ -450,7 +450,7 @@
     for node in traverse(list) do
         print(node.val)
     end
-*** itertors with complex state    
+*** itertors with complex state
     所有涉及到的代码，参看codesegment下的同类文件，比如，此处的代码就是itertorswithcomplexstate.lua
     Frequently, an iterator needs to keep more state than ts into a single invariant
     state and a control variable. The simplest solution is to use closures. An
@@ -474,7 +474,7 @@
     must do at each iteration. More specically, the iterator receives as argument a
     function that it calls inside its loop.
     <code>
-* Compilation, Execution, and errors    
+* Compilation, Execution, and errors
 ** compilation
    loadfile is a function, does the hard work. Like dofile, loadfile loads a Lua chunk from a file,
    but it does not run the chunk. Instead, it only compiles the chunk and returns the compiled
@@ -523,3 +523,162 @@
    that is, statements. If you want to evaluate an expression, you must prex it
    with return, so that you get a statement that returns the value of the given
    expression.
+
+   loadfile,loadstirng都会调用原生的load函数，load receives a reader function that it calls to
+   get its chunk，We seldom use load; its main use is when the chunk in not in a file
+   (e.g., it is created dynamically or read from another source) and too big to fit
+   comfortably in memory (otherwise we could use loadstring).
+
+   Lua treats any independent chunk as the body of an anonymous function
+   with a variable number of arguments.例如：
+   loadstring("a=1") returns the equivalent of the following expression:
+   functioin(...) a = 1 end
+   Like any other function, chunks can declare local variables:
+   f = loadstring("local a = 10; print(a + 20)")
+   f() --> 30
+   <code>
+   Moreover, these functions never have any kind of side effect. They only compile
+   the chunk to an internal representation and return the result, as an anonymous
+   function, A common mistake is to assume that loading a chunk defines functions.
+   in lua, function definitions are assignments; as such, they are made at runtime, not at
+   compile time.例如：
+   foo.lua的内容为：
+   function foo(x)
+       print(x)
+   end
+   在lua中执行语句：
+   f = loadfile("foo.lua")
+   在这之后，foo被编译了，但是还为定义。为了定义它，必须执行如下语句：
+   print(foo) -->nil
+   f() -- defines 'foo'
+   foo("ok") -->ok
+** C code
+   Lua provides all the functionality of dynamic linking in a single function,
+   called package.loadlib. It has two string arguments: the complete path of the
+   library and the name of a function.
+   
+   The loadlib function loads the given library and links Lua to it. However, it
+   does not call the function. Instead, it returns the C function as a Lua function.
+   If there is any error loading the library or nding the initialization function,
+   loadlib returns nil plus an error message
+
+   Usually, we load C libraries using require. This function searches for the
+   library and uses loadlib to load an initialization function for the library.
+   Once called, this initialization function registers in Lua the functions from that library,
+   much as a typical Lua chunk denes other functions
+** Errors
+   Instead, whenever an error occurs, Lua ends the current chunk and returns to
+   the application.
+   You can also explicitly raise an error calling the error function with the error
+   message as an argument
+
+   Lua always evaluates its arguments before calling the function. Therefore,
+   if you have something like,
+   n = io.read()
+   assert(tonumber(n), "invalid input: " .. n .. " is not a number")
+
+   When a function nds an unexpected situation (an exception), it can assume
+   two basic behaviors: it can return an error code (typically nil) or it can raise an
+   error, calling the error function,provide a general guideline: an exception that is
+   easily avoided should raise an error; otherwise, it should return an error code.(P88)
+** Error handing and exceptions
+   If you need to handle errors in Lua, you must use the pcall function(protected call) to
+   encapsulate(包装) your code，例如：
+   function foo()
+       <some code>
+       if unexpected_condition then error() end
+       <some code>
+       print(a[i])
+       <some code>
+   end
+   call foo with pcall:
+   if pcall(foo) then
+       -- no errors while ruuing 'foo'
+       <regular code>
+   else
+       -- 'foo' raised an error
+       <error-handing code>
+   end
+   或者使用如下的调用方法：
+   if pcall(function()
+       <protected code>
+   end) then
+       <regular code>
+   else 
+       <error-handing code>
+   end
+   The pcall function calls its rst argument in protected mode, so that it
+   catches any errors while the function is running. If there are no errors, pcall
+   returns true, plus any values returned by the call. Otherwise, it returns false,
+   plus the error message
+
+   the error message does not have to be a string. Any Lua
+   value that you pass to error will be returned by pcall
+
+   local status, err = pcall(function() error({code=121}) end)
+   print(err.code) -->121
+** Error message and tracebacks
+   if we want a traceback, we must build it before pcall
+   returns. To do this, Lua provides the xpcall function.
+   Besides the function to be called, it receives a second argument, an error handler function
+   In case of error, Lua calls this error handler before the stack unwinds,
+   so that it can use the debug library to gather any extra information it wants about the error.
+
+   Two common error handlers are debug.debug, which gives you a Lua prompt so that
+   you can inspect by yourself what was going on when the error happened; and
+   debug.traceback, which builds an extended error message with a traceback
+* Coroutines(协程)
+  A coroutine is similar to a thread (in the sense of multithreading): it is a line
+  of execution, with its own stack, its own local variables, and its own instruction
+  pointer; but sharing global variables and mostly anything else with other coroutines
+
+  The main difference between threads and coroutines is that, conceptually a program with threads runs several
+  threads concurrently，Coroutines, on the other hand, are collaborative: at any
+  given time, a program with coroutines is running only one of its coroutines, and
+  this running coroutines suspends its execution only when it explicitly requests
+  to be suspended.(p92)
+** coroutine basics
+   Lua packs all its coroutine-related functions in the coroutine table. The create
+   function creates new coroutines. It has a single argument, a function with the
+   code that the coroutine will run. It returns a value of type thread, which represents
+   the new coroutine. Quite often, the argument to create is an anonymous function, like here
+
+   co = coroutine.create(function() print("hi") end)
+
+   A coroutine can be in one of four different states: suspended, running, dead,
+   and normal. When we create a coroutine, it starts in the suspended state.
+   The real power of coroutines stems from the yield function,
+   which allows a running coroutine to suspend its own execution so that it can
+   be resumed later.let us see a simple example:
+   <code1>
+
+   cannot resume dead coroutine
+   Note that resume runs in protected mode. Therefore, if there is any error inside
+   a coroutine, Lua will not show the error message, but instead will return it to
+   the resume call
+
+   When a coroutine resumes another, it is not suspended; after all, we cannot resume it.
+   However, it is not running either, because the running coroutine is the other one. So,
+   its own status is what we call the normal state.
+
+   A useful facility in Lua is that a pair resumeyield can exchange data. The
+   rst resume, which has no corresponding yield waiting for it, passes its extra
+   arguments as arguments to the coroutine main function:
+
+   Finally, when a coroutine ends, any values returned by its main function go to
+   the corresponding resume
+   
+   Lua offers what I call asymmetric coroutines. This means that it has a function to
+   suspend the execution of a coroutine and a different function to resume a suspended
+   coroutine. Some other languages offer symmetric coroutines, where there is only one function
+   to transfer control from any coroutine to another
+** Pipes and filters
+   One of the most paradigmatic examples of coroutines is the producerconsumer
+   problem.
+   <code>
+** coroutines as iterators   
+** Non-preemptive multithreading
+* Data Structures(P117)
+* Lua的安装
+  下载源码，make -> sudo make install
+  安装luasocket，去http://luaforge.net/projects/ 搜索luasocket，下载，之后make -> sudo make install

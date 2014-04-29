@@ -1,0 +1,3 @@
+* 单文件编译
+  gcc name.c -fPIC -shared
+* 在Linux的工程中使用lua

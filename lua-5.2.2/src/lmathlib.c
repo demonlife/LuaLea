@@ -4,6 +4,9 @@
 ** See Copyright Notice in lua.h
 */
 
+/*
+** 实现原理：利用math中的函数，然后转换为l_mathop类型来执行相关的函数
+*/
 
 #include <stdlib.h>
 #include <math.h>
@@ -166,7 +169,7 @@ static int math_ldexp (lua_State *L) {
 }
 
 
-
+// 查找最小值，挨个比较
 static int math_min (lua_State *L) {
   int n = lua_gettop(L);  /* number of arguments */
   lua_Number dmin = luaL_checknumber(L, 1);
@@ -229,7 +232,9 @@ static int math_randomseed (lua_State *L) {
   return 0;
 }
 
-
+/*
+** 什么用途？
+*/
 static const luaL_Reg mathlib[] = {
   {"abs",   math_abs},
   {"acos",  math_acos},

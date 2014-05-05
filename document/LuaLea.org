@@ -1,3 +1,6 @@
 * 单文件编译
-  gcc name.c -fPIC -shared
+  gcc name.c -fPIC -shared // 运行会出现core dump
 * 在Linux的工程中使用lua
+* Lua源码阅读
+  在reddit上LuaJIT的作者推荐了一个Lua源码的阅读顺序
+  http://www.reddit.com/comments/63hth/ask_reddit_which_oss_codebases_out_there_are_so/c02pxbp

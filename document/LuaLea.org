@@ -4,3 +4,16 @@
 * Lua源码阅读
   在reddit上LuaJIT的作者推荐了一个Lua源码的阅读顺序
   http://www.reddit.com/comments/63hth/ask_reddit_which_oss_codebases_out_there_are_so/c02pxbp
+** 代码风格
+   lua的内部模块暴露出来的API以luaX_xxx风格命名，即lua后跟
+   一个大写字母表示内部模块名，而后由下划线加若干小写字母描述
+   方法名。
+
+   供外部程序使用的API则使用lua_xxx命名风格 。
+** lua 的特性
+   不同的lua虚拟机之间的工作是线程安全的，因为一切和虚拟机相关的内存操作都被关联
+   到虚拟机对象中，而没有利用任何其他共享变量。
+
+   lua的虚拟机核心部分没有任何的系统调用，正确的使用lua，不会对系统造成任何干扰，
+   lua让用户自行定义内存管理器。
+   

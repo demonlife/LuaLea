@@ -923,7 +923,7 @@ static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
     return NULL;
   }
   else
-    return realloc(ptr, nsize);
+    return realloc(ptr, nsize); // realloc is include in stdlib.h
 }
 
 

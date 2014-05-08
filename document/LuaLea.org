@@ -1,6 +1,14 @@
 * 单文件编译
   gcc name.c -fPIC -shared // 运行会出现core dump
 * 在Linux的工程中使用lua
+** 具体使用方法如下
+   1. 下载最新的lua源码
+   2. 在自己的工程中添加一个依赖库的目录，比如deps
+   3. 将lua的源码解压到deps目录下
+   4. 进入lua的src目录下，执行make a，以此生成静态库文件
+   5. 编译自己的工程， 以一个简单的测试文件为例，使用如下的编译命令
+      gcc -o main -Ideps/lua/src deps/lua/liblua.a main.c
+   6. 编译完之后，就可以直接执行main文件了
 * Lua源码阅读
   在reddit上LuaJIT的作者推荐了一个Lua源码的阅读顺序
   http://www.reddit.com/comments/63hth/ask_reddit_which_oss_codebases_out_there_are_so/c02pxbp

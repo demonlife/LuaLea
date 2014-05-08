@@ -7,7 +7,7 @@
    3. 将lua的源码解压到deps目录下
    4. 进入lua的src目录下，执行make a，以此生成静态库文件
    5. 编译自己的工程， 以一个简单的测试文件为例，使用如下的编译命令
-      gcc -o main -Ideps/lua/src deps/lua/liblua.a main.c
+      gcc -o main -Ideps/lua/src deps/lua/liblua.a -lm main.c #用到了数学库
    6. 编译完之后，就可以直接执行main文件了
 * Lua源码阅读
   在reddit上LuaJIT的作者推荐了一个Lua源码的阅读顺序

@@ -21,6 +21,32 @@
       /home/wangbin/work/tmp/lua/test.c:26: undefined reference to `luaL_newstate' 
       ...
    3. 缺少-lm，会包数学库的错误
+** Lua 头文件的说明
+*** lua.h
+    defines the basic functions provided by Lua.
+    It includes functions to create a new Lua environment, to invoke
+    Lua functions (such as lua_pcall), to read and write global variables in the
+    Lua environment, to register new functions to be called by Lua, and so on.
+    Everything defined in lua.h has a lua_ prefix
+*** lauxlib.h
+    defines the functions provided by the auxiliary library (auxlib).
+    All its definitions start with luaL_ (e.g., luaL_loadbuffer).
+    The auxiliary library uses the basic API provided by lua.h to provide a
+    higher abstraction level; all Lua standard libraries use the auxlib.
+    The basic API strives for economy and orthogonality,
+    whereas auxlib strives for practicality for common tasks.
+    the auxlib has no access to the internals of Lua.
+    It does its entire job through the official basic API.
+*** lualib.h
+    When luaL_newstate creates a fresh environment, this environment contains
+    no predefined functions, not even print. To keep Lua small,
+    all standard libraries are provided as separate packages,
+    so that you do not have to use them if you do not need to.
+    defines functions to open the libraries.
+    The function luaL_openlibs opens all standard libraries.
+
+
+
 * Lua源码阅读
   在reddit上LuaJIT的作者推荐了一个Lua源码的阅读顺序
   http://www.reddit.com/comments/63hth/ask_reddit_which_oss_codebases_out_there_are_so/c02pxbp

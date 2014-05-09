@@ -7,8 +7,20 @@
    3. 将lua的源码解压到deps目录下
    4. 进入lua的src目录下，执行make a，以此生成静态库文件
    5. 编译自己的工程， 以一个简单的测试文件为例，使用如下的编译命令
-      gcc -o main -Ideps/lua/src deps/lua/liblua.a -lm main.c #用到了数学库
+      gcc -o main -I./deps/lua/src ./deps/lua/src/liblua.a -lm -ldl main.c
+      #用到了数学库
    6. 编译完之后，就可以直接执行main文件了
+** Lua 编译问题总结
+   http://blog.csdn.net/wangbin579/article/details/7265405
+   1. 缺少-ldl，会出现以下错误
+      /usr/local/lib/liblua.a(loadlib.o): In function `gctm': 
+      loadlib.c:(.text+0x35): undefined reference to `dlclose'
+      ... 
+   2. 缺少liblua.a，会出现以下错误
+      /tmp/ccCT0d24.o: In function `main': 
+      /home/wangbin/work/tmp/lua/test.c:26: undefined reference to `luaL_newstate' 
+      ...
+   3. 缺少-lm，会包数学库的错误
 * Lua源码阅读
   在reddit上LuaJIT的作者推荐了一个Lua源码的阅读顺序
   http://www.reddit.com/comments/63hth/ask_reddit_which_oss_codebases_out_there_are_so/c02pxbp

@@ -66,6 +66,8 @@ typedef int (*lua_Writer) (lua_State *L, const void* p, size_t sz, void* ud);
 
 /*
 ** prototype for memory-allocation functions
+** lua_Alloc 是一个返回为void*
+** 参数为(void *ud, void *ptr, size_t osize, size_t nsize)的函数指针
 */
 typedef void * (*lua_Alloc) (void *ud, void *ptr, size_t osize, size_t nsize);
 

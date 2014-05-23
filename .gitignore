@@ -21,3 +21,9 @@
 *.i*86
 *.x86_64
 *.hex
+
+# lua src
+lua-5.1.4/*
+lua-5.2.2/src/lua
+lua-5.2.2/src/luac
+tmp/*

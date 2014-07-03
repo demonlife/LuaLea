@@ -1,0 +1,21 @@
+* Redis中使用lua
+  http://www.oschina.net/translate/intro-to-lua-for-redis-programmers
+** 调用方法
+   redis-cli eval "$(cat example.lua)" 0
+   调用时，使用cat命令读取example.lua的内容，第二个参数0：该脚本需要访问的redis的键
+   的个数。
+*** 访问键和参数
+    redis-cli eval "$(cat example.lua)" 1 a
+    1:访问键的个数，a:键的名称
+    为redis编写lua脚本时，每个key都是通过KEYS表指定，ARGV用来传递参数.
+*** 访问库
+    reids的lua解释器加载七个库:base, table, string, math, debug,cjson, cmsgpack
+    前几个都是标准库，允许使用任何语言进行基本的操作，后面两个可以让redis支持json和
+    messagepack。
+*** 总结
+    lua中表的下标是从1开始的，
+    redis.call会触发lua中的异常，redis.pcall将自动捕获所有能检测到的错误并以表的
+    形式返回错误内容，
+    lua数字都将被转换为整数，发给redis的小数点会丢失，返回前把他们转换成字符串类型
+    确保在lua中使用的所有key都在key表中，否则在将来的redis版本中脚本都有不能被很好支持的危险
+    lua脚本和其他redis操作一样，在脚本执行时，其他的一切都不能运行。
